@@ -44,9 +44,17 @@ public class MenuItemListener implements ActionListener {
                 viewSelected.append(e.getActionCommand());
                 break;
             case "Contact Us":
-                String url_open ="https://github.com/vichhika";
+                String url_open_profile ="https://github.com/vichhika";
                 try {
-                    java.awt.Desktop.getDesktop().browse(java.net.URI.create(url_open));
+                    java.awt.Desktop.getDesktop().browse(java.net.URI.create(url_open_profile));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                break;
+            case "About 2D Data Visualization":
+                String url_open_help ="https://github.com/vichhika/2D-Data-Visualization/blob/main/README.md";
+                try {
+                    java.awt.Desktop.getDesktop().browse(java.net.URI.create(url_open_help));
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
                 }
