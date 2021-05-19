@@ -1,15 +1,21 @@
-package controller.component;
+package controller;
 
 import controller.action.MenuItemListener;
+import model.DataSet;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 
 public class MenuBar extends JMenuBar{
 
+    //handle all component and model that it required
     private HashMap<String,JMenu> menus = new HashMap<>();
     private HashMap<String,JMenuItem> menuItems = new HashMap<>();
-    private MenuItemListener menuItemListener = new MenuItemListener();
+    private DataSet dataSet = new DataSet();
+    private StringBuilder viewSelected = new StringBuilder("Pie Chart");
+    private MenuItemListener menuItemListener = new MenuItemListener(dataSet,viewSelected);
 
     public MenuBar(JFrame parent){
     }
@@ -29,5 +35,6 @@ public class MenuBar extends JMenuBar{
     public JMenuItem getMenuItem(String key){
         return this.menuItems.get(key);
     }
-
+    public DataSet getDataSet(){return dataSet;}
+    public StringBuilder getViewSelected(){ return  viewSelected;}
 }

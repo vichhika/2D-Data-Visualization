@@ -1,8 +1,10 @@
-package controller.component;
+package controller;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 
 public class FileLoader extends JFileChooser {
 
@@ -25,12 +27,21 @@ public class FileLoader extends JFileChooser {
         this.setAcceptAllFileFilterUsed(false);
     }
 
-    public void loadFile(){
+    public String loadFile(){
+        String dataRead = "";
         int DIALOG_CONDITION = this.showDialog(null,"Load");
         if(DIALOG_CONDITION == JFileChooser.APPROVE_OPTION){
             File selectedFile = this.getSelectedFile();
-            System.out.println("Selected File: " + selectedFile.getAbsolutePath());
+            try {
+                Scanner readFile = new Scanner(selectedFile);
+                while(readFile.hasNextLine()){
+                    dataRead += readFile.nextLine()+"\n";
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
+        return dataRead;
     }
 
 }
