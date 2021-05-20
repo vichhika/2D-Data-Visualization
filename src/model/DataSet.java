@@ -11,12 +11,19 @@ public class DataSet extends HashMap{
         String[] readline = data.split("\n");
         ArrayList<String> strings = new ArrayList<>();
         for(String x:readline){
-            String[] x_split = x.split(", +");
+            String[] x_split = x.split(", *");
             for(String y:x_split){
                 strings.add(y);
             }
         }
         for(int i = 0;i<strings.size();i+=2){
+            try {
+                Double.valueOf(strings.get(i+1));
+            }catch (Exception e){
+                System.out.println("Label "+strings.get(i)+" filtered out.");
+                continue;
+
+            }
             ArrayList<Float> colors = new ArrayList<>();
             this.put(strings.get(i),Double.valueOf(strings.get(i+1)));
             colors.add((float) Math.random());
