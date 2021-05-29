@@ -6,13 +6,14 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import model.DataSet;
 
-import javax.swing.*;
 import java.awt.*;
-import java.text.DecimalFormat;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.*;
 
-public class GLListener implements GLEventListener {
+public class GLListener implements GLEventListener, KeyListener {
 
+    int KEY_CHANGE = 0;
     DataSet dataSet;
     StringBuilder viewSelected;
     int x0 = -600;
@@ -36,151 +37,159 @@ public class GLListener implements GLEventListener {
 
     @Override
     public void display(GLAutoDrawable glAutoDrawable) {
-        Set keys = dataSet.keySet();
-        HashMap<Object, Double> percentage = new HashMap<>();
-        HashMap<Object, Double> radians = new HashMap<>();
-        double total = 0.0;
-        Double totalRad = 0.0;
-        for(Object key:keys) total += Double.valueOf(String.valueOf(dataSet.get(key)));
-        for(Object key:keys) percentage.put(key,100*(Float.valueOf(String.valueOf(dataSet.get(key)))/total));
-        for(Object key:keys) radians.put(key,Math.toRadians(360 * (Double.valueOf(String.valueOf(dataSet.get(key)))/total)));
-        for(Object key:keys) totalRad += radians.get(key);
+        try {
+            Set keys = dataSet.keySet();
+            HashMap<Object, Double> percentage = new HashMap<>();
+            HashMap<Object, Double> radians = new HashMap<>();
+            double total = 0.0;
+            Double totalRad = 0.0;
+            for(Object key:keys) total += Double.valueOf(String.valueOf(dataSet.get(key)));
+            for(Object key:keys) percentage.put(key,100*(Float.valueOf(String.valueOf(dataSet.get(key)))/total));
+            for(Object key:keys) radians.put(key,Math.toRadians(360 * (Double.valueOf(String.valueOf(dataSet.get(key)))/total)));
+            for(Object key:keys) totalRad += radians.get(key);
 
-        GL2 gl2 = glAutoDrawable.getGL().getGL2();
-        gl2.glClear(GL2.GL_COLOR_BUFFER_BIT);
+            GL2 gl2 = glAutoDrawable.getGL().getGL2();
+            gl2.glClear(GL2.GL_COLOR_BUFFER_BIT);
 
-        if(dataSet.size() == 0)
-        {
-            TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.BOLD,24));
-            textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-            textRenderer.setColor(Color.black);
-            textRenderer.draw("Please load the data.",280,320);
-            textRenderer.endRendering();
-        }
-        else if(viewSelected.toString().equals("Pie Chart"))
-        {
-            Double currentRad = totalRad;
-            Double unitRad = totalRad/360;
-            for(Object key:keys)
+            if(dataSet.size() == 0)
             {
-                gl2.glColor3f(dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2));
-                gl2.glBegin(GL2.GL_POLYGON);
-                gl2.glVertex2f(0,0);
-                for(double i = currentRad ; i > -1 ; i-=unitRad)
+                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.BOLD,24));
+                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                textRenderer.setColor(Color.black);
+                textRenderer.draw("Please load the data.",280,320);
+                textRenderer.endRendering();
+            }
+            else if(viewSelected.toString().equals("Pie Chart"))
+            {
+                Double currentRad = totalRad;
+                Double unitRad = totalRad/360;
+                for(Object key:keys)
                 {
-                    if(i > currentRad-radians.get(key))
+                    gl2.glColor3f(dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2));
+                    gl2.glBegin(GL2.GL_POLYGON);
+                    gl2.glVertex2f(0,0);
+                    for(double i = currentRad ; i > -1 ; i-=unitRad)
                     {
-                        float x = (float) (0 + 450*Math.cos(i));
-                        float y = (float) (0 + 450*Math.sin(i));
-                        gl2.glVertex2f(x,y);
+                        if(i > currentRad-radians.get(key))
+                        {
+                            float x = (float) (0 + 450*Math.cos(i));
+                            float y = (float) (0 + 450*Math.sin(i));
+                            gl2.glVertex2f(x,y);
 
-                    }else
-                    {
-                        gl2.glVertex2f(0,0);
-                        gl2.glEnd();
-                        currentRad -= radians.get(key);
-                        break;
+                        }else
+                        {
+                            gl2.glVertex2f(0,0);
+                            gl2.glEnd();
+                            currentRad -= radians.get(key);
+                            break;
+                        }
                     }
                 }
+                currentRad = totalRad;
+                for(Object key: keys)
+                {
+                    Double i = currentRad - (radians.get(key)/2);
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,13));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(String.format("%s ",String.valueOf(key).subSequence(0,3)),(int)(400+Math.round(220*Math.cos(i))),(int) (300+Math.round(220*Math.sin(i))));
+                    textRenderer.draw(String.format("(%.2f%%)",percentage.get(key)),(int)(400+Math.round(220*Math.cos(i))),(int) (305+Math.round(220*Math.sin(i)))-20);
+                    textRenderer.endRendering();
+                    currentRad -= radians.get(key);
+
+                }
             }
-            currentRad = totalRad;
-            for(Object key: keys)
+            else if(viewSelected.toString().equals("Bar Chart"))
             {
-                Double i = currentRad - (radians.get(key)/2);
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,13));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(String.format("%s ",String.valueOf(key).subSequence(0,3)),(int)(400+Math.round(220*Math.cos(i))),(int) (300+Math.round(220*Math.sin(i))));
-                textRenderer.draw(String.format("(%.2f%%)",percentage.get(key)),(int)(400+Math.round(220*Math.cos(i))),(int) (305+Math.round(220*Math.sin(i)))-20);
-                textRenderer.endRendering();
-                currentRad -= radians.get(key);
+                drawAxis(glAutoDrawable);
+                int unitX = Math.round(1200/dataSet.size());
+                int currentX = x0+unitX;
+                for (Object key:keys)
+                {
+                    int y1 = Math.round(featureScaling(y0,y0+900, Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    drawBarX(glAutoDrawable,currentX,y0,currentX,y1, dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/4);
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(((String) key).subSequence(0,3), 390+(currentX/2),110);
+                    textRenderer.endRendering();
+                    currentX += unitX;
+
+                }
+                for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
+                {
+                    int height = Math.round(featureScaling(120,570,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(String.valueOf(i), 60,height);
+                    textRenderer.endRendering();
+                }
+            }
+            else if(viewSelected.toString().equals("Column Chart"))
+            {
+                drawAxis(glAutoDrawable);
+                int unitY = Math.round(900/dataSet.size());
+                int currentY = y0+unitY;
+                for(Object key:keys)
+                {
+                    int x1 = Math.round(featureScaling(x0,x0+1200,Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    drawBarY(glAutoDrawable,x0,currentY,x1,currentY,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitY/4);
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(((String) key).subSequence(0,3), 60,300+(currentY/2));
+                    textRenderer.endRendering();
+                    currentY += unitY;
+                }
+                for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
+                {
+                    int width = Math.round(featureScaling(100,700,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(String.valueOf(i), width,110);
+                    textRenderer.endRendering();
+                }
 
             }
+            else if (viewSelected.toString().equals("Scatter Plot"))
+            {
+                drawAxis(glAutoDrawable);
+                int unitX = Math.round(1200/dataSet.size());
+                int currentX = x0+unitX;
+                for (Object key:keys)
+                {
+                    int y1 = Math.round(featureScaling(y0,y0+900, Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    //drawBarX(glAutoDrawable,currentX,y0,currentX,y1, dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/4);
+                    if(KEY_CHANGE == 0) drawCircle(glAutoDrawable,currentX,y1,unitX/6,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2));
+                    else if(KEY_CHANGE == 1) drawminus(glAutoDrawable,currentX,y1,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/10);
+                    else if(KEY_CHANGE == 2) drawplus(glAutoDrawable,currentX,y1,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/10);
+                    else if(KEY_CHANGE == 3) drawstar(glAutoDrawable,currentX,y1,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/10);
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(((String) key).subSequence(0,3), 390+(currentX/2),110);
+                    textRenderer.endRendering();
+                    currentX += unitX;
+
+                }
+                for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
+                {
+                    int height = Math.round(featureScaling(120,570,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
+                    TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
+                    textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
+                    textRenderer.setColor(Color.black);
+                    textRenderer.draw(String.valueOf(i), 60,height);
+                    textRenderer.endRendering();
+                }
+
+            }
+            gl2.glFlush();
         }
-        else if(viewSelected.toString().equals("Bar Chart"))
-        {
-            drawAxis(glAutoDrawable);
-            int unitX = Math.round(1200/dataSet.size());
-            int currentX = x0+unitX;
-            for (Object key:keys)
-            {
-                int y1 = Math.round(featureScaling(y0,y0+900, Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                drawBarX(glAutoDrawable,currentX,y0,currentX,y1, dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/4);
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(((String) key).subSequence(0,3), 390+(currentX/2),110);
-                textRenderer.endRendering();
-                currentX += unitX;
-
-            }
-            for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
-            {
-                int height = Math.round(featureScaling(120,570,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(String.valueOf(i), 60,height);
-                textRenderer.endRendering();
-            }
+        catch (Exception e){
+            dataSet.clear();
         }
-        else if(viewSelected.toString().equals("Column Chart"))
-        {
-            drawAxis(glAutoDrawable);
-            int unitY = Math.round(900/dataSet.size());
-            int currentY = y0+unitY;
-            for(Object key:keys)
-            {
-                int x1 = Math.round(featureScaling(x0,x0+1200,Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                drawBarY(glAutoDrawable,x0,currentY,x1,currentY,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitY/4);
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(((String) key).subSequence(0,3), 60,300+(currentY/2));
-                textRenderer.endRendering();
-                currentY += unitY;
-            }
-            for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
-            {
-                int width = Math.round(featureScaling(100,700,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(String.valueOf(i), width,110);
-                textRenderer.endRendering();
-            }
-
-        }
-        else if (viewSelected.toString().equals("Scatter Plot"))
-        {
-            drawAxis(glAutoDrawable);
-            int unitX = Math.round(1200/dataSet.size());
-            int currentX = x0+unitX;
-            for (Object key:keys)
-            {
-                int y1 = Math.round(featureScaling(y0,y0+900, Float.valueOf(String.valueOf(dataSet.get(key))),dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                //drawBarX(glAutoDrawable,currentX,y0,currentX,y1, dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2),unitX/4);
-                drawCircle(glAutoDrawable,currentX,y1,unitX/6,dataSet.getLabelColor((String) key).get(0),dataSet.getLabelColor((String) key).get(1),dataSet.getLabelColor((String) key).get(2));
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(((String) key).subSequence(0,3), 390+(currentX/2),110);
-                textRenderer.endRendering();
-                currentX += unitX;
-
-            }
-            for(int i = (int) dataSet.getMinimunValue(); i <= dataSet.getMaximunValue(); i+=dataSet.getMaximunValue()/10)
-            {
-                int height = Math.round(featureScaling(120,570,i,dataSet.getMaximunValue(),dataSet.getMinimunValue()));
-                TextRenderer textRenderer = new TextRenderer(new Font("Verdana",Font.PLAIN,12));
-                textRenderer.beginRendering(glAutoDrawable.getSurfaceWidth(),glAutoDrawable.getSurfaceHeight());
-                textRenderer.setColor(Color.black);
-                textRenderer.draw(String.valueOf(i), 60,height);
-                textRenderer.endRendering();
-            }
-
-        }
-        gl2.glFlush();
     }
 
     @Override
@@ -244,7 +253,83 @@ public class GLListener implements GLEventListener {
         gl2.glEnd();
     }
 
+    public void drawminus(GLAutoDrawable glAutoDrawable,int x0,int y0,float r,float g,float b,float width)
+    {
+        GL2 gl2 = glAutoDrawable.getGL().getGL2();
+        gl2.glColor3f(r,g,b);
+        gl2.glLineWidth(width/5);
+        gl2.glBegin(GL2.GL_LINES);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0-(width*3),y0);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0+(width*3),y0);
+        gl2.glEnd();
+        gl2.glLineWidth(1);
+    }
+
+    public void drawplus(GLAutoDrawable glAutoDrawable,int x0,int y0,float r,float g,float b,float width)
+    {
+        GL2 gl2 = glAutoDrawable.getGL().getGL2();
+        gl2.glColor3f(r,g,b);
+        gl2.glLineWidth(width/5);
+        gl2.glBegin(GL2.GL_LINES);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0-(width*3),y0);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0,y0+(width*3));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0+(width*3),y0);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0,y0-(width*3));
+        gl2.glEnd();
+        gl2.glLineWidth(1);
+    }
+
+    public void drawstar(GLAutoDrawable glAutoDrawable,int x0,int y0,float r,float g,float b,float width)
+    {
+        GL2 gl2 = glAutoDrawable.getGL().getGL2();
+        gl2.glColor3f(r,g,b);
+        gl2.glLineWidth(width/5);
+        gl2.glBegin(GL2.GL_LINES);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0-(width*3),y0);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0-(width*2),y0+(width*2));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0,y0+(width*3));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0+(width*2),y0+(width*2));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0+(width*3),y0);
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0+(width*2),y0-(width*2));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0,y0-(width*3));
+        gl2.glVertex2f(x0,y0);
+        gl2.glVertex2f(x0-(width*2),y0-(width*2));
+        gl2.glEnd();
+        gl2.glLineWidth(1);
+    }
+
     private float featureScaling(float a,float b,float x,float max,float min){
         return a + ((x-min)*(b-a))/(max-min);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent keyEvent) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent keyEvent) {
+        if(keyEvent.getKeyCode() == KeyEvent.VK_TAB){
+            KEY_CHANGE++;
+            if(KEY_CHANGE == 4) KEY_CHANGE = 0;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent keyEvent) {
+
     }
 }

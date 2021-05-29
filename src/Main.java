@@ -18,6 +18,7 @@ public class Main {
     private static final MainFrame window = new MainFrame("2D Data Visualization",800,600,10);
     private static final MenuBar menuBar = new MenuBar(window);
 
+
     /**
      * implement component by function
      * ----------------------------------------------------------------------------------------------------------------
@@ -49,7 +50,10 @@ public class Main {
         final GLProfile profile = GLProfile.get(GLProfile.GL2);
         GLCapabilities capabilities = new GLCapabilities(profile);
         GLCanvas glCanvas = new GLCanvas(capabilities);
-        glCanvas.addGLEventListener(new GLListener(menuBar.getDataSet(),menuBar.getViewSelected()));
+        GLListener canvasListener = new GLListener(menuBar.getDataSet(), menuBar.getViewSelected());
+        glCanvas.addGLEventListener(canvasListener);
+        glCanvas.addKeyListener(canvasListener);
+        glCanvas.setFocusTraversalKeysEnabled(false);
         glCanvas.setSize(window.getScreenWidth(),window.getScreenHight());
         window.getContentPane().add(glCanvas);
         FPSAnimator fpsAnimator = new FPSAnimator(glCanvas,1);

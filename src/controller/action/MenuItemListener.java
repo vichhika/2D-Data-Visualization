@@ -26,6 +26,9 @@ public class MenuItemListener implements ActionListener {
             case "Load File":
                 dataSet.clear();
                 dataSet.setData(fileLoader.loadFile());
+                for(Object key : dataSet.keySet()){
+                    System.out.println(dataSet.get(key));
+                }
                 break;
             case "Pie Chart":
                 viewSelected.delete(0,viewSelected.length());
