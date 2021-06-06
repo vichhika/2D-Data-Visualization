@@ -8,6 +8,7 @@ import model.DataSet;
 import view.MainFrame;
 
 import javax.swing.*;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     /**
@@ -56,10 +57,13 @@ public class Main {
         glCanvas.setFocusTraversalKeysEnabled(false);
         glCanvas.setSize(window.getScreenWidth(),window.getScreenHight());
         window.getContentPane().add(glCanvas);
-        FPSAnimator fpsAnimator = new FPSAnimator(glCanvas,1);
-        fpsAnimator.start();
         menuView();
         initWindow();
+
+        while (true){
+            TimeUnit.SECONDS.sleep(1);
+            glCanvas.repaint();
+        }
 
 
     }
